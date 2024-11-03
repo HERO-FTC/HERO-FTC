@@ -28,10 +28,13 @@
  */
 package org.firstinspires.ftc.robotcontroller.external.samples;
 import androidx.annotation.Nullable;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+//import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+//import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 /*
  * This file contains an example of a Linear "OpMode".
@@ -60,7 +63,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
  * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list
  */
-@TeleOp(name="NEW new: Omni Linear OpMode", group="Linear OpMode")
+@TeleOp(name="TEST 3: Omni Linear OpMode", group="Linear OpMode")
 //@Disabled
 public class IntoTheTeleOp extends LinearOpMode {
     // Declare OpMode members for each of the 4 motors.
@@ -70,10 +73,12 @@ public class IntoTheTeleOp extends LinearOpMode {
     private DcMotor rightFrontDrive = null;
     private DcMotor rightBackDrive = null;
     private DcMotor liftRotator = null;
-//    public boolean normalMode = true ;
+    private DcMotor liftExtender = null;
+
+    //    public boolean normalMode = true ;
 //    public float sprintMode = gamepad1.left_trigger;
 //    public float crouchMode = gamepad1.right_trigger;
-//    @Override
+    @Override
     public void runOpMode() {
         // Initialize the hardware variables. Note that the strings used here must correspond
         // to the names assigned during the robot configuration step on the DS or RC devices.
@@ -82,6 +87,8 @@ public class IntoTheTeleOp extends LinearOpMode {
         rightFrontDrive = hardwareMap.get(DcMotor.class, "right_front_drive");
         rightBackDrive = hardwareMap.get(DcMotor.class, "right_back_drive");
         liftRotator = hardwareMap.get(DcMotor.class, "lift_rotator");
+//        liftExtender = hardwareMap.get(DcMotor.class, "lift_extender");
+
 
 
         // ########################################################################################
@@ -99,6 +106,7 @@ public class IntoTheTeleOp extends LinearOpMode {
         rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
         rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
         liftRotator.setDirection(DcMotor.Direction.FORWARD);
+//        liftExtender.setDirection(DcMotor.Direction.FORWARD);
         // Wait for the game to start (driver presses START)
         telemetry.addData("Status", "Initialized");
         telemetry.update();
@@ -132,10 +140,14 @@ public class IntoTheTeleOp extends LinearOpMode {
             }
 
 
-            while (gamepad1.left_trigger>=0 || gamepad1.right_trigger>=0) {
+            while (gamepad1.left_trigger>0 || gamepad1.right_trigger>0) {
                 float armPower = -gamepad1.left_trigger + gamepad1.right_trigger;
                 liftRotator.setPower(armPower);
             }
+//
+//            while (gamepad1.left_bumper || gamepad1.right_bumper) {
+//                liftExtender.setPower(gamepad1.left_stick_y);
+//            }
 
 //            if (normalMode) {
 //                leftFrontPower = (vertical + lateral + rotate) / 2;
