@@ -26,17 +26,13 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 package org.firstinspires.ftc.robotcontroller.external.samples;
-
+import androidx.annotation.Nullable;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
-
 /*
  * This file contains an example of a Linear "OpMode".
  * An OpMode is a 'program' that runs in either the autonomous or the teleop period of an FTC match.
@@ -64,50 +60,28 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
  * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list
  */
-
-@TeleOp(name="Basic: Omni Linear OpMode", group="Linear OpMode")
-@Disabled
+@TeleOp(name="NEW new: Omni Linear OpMode", group="Linear OpMode")
+//@Disabled
 public class IntoTheTeleOp extends LinearOpMode {
-
     // Declare OpMode members for each of the 4 motors.
     private ElapsedTime runtime = new ElapsedTime();
     private DcMotor leftFrontDrive = null;
     private DcMotor leftBackDrive = null;
     private DcMotor rightFrontDrive = null;
     private DcMotor rightBackDrive = null;
-    private DcMotor liftExtender = null;
     private DcMotor liftRotator = null;
-    private CRServo gripping = null;
-    private Servo gripperTurn = null;
-    private DcMotor actuator = null;
-
-
-    public boolean normalMode = true ;
-    public float sprintMode = gamepad1.left_trigger;
-    public float crouchMode = gamepad1.right_trigger;
-
-    // need to set default values for servos later
-    public double grippingPosition = 0;
-    public double gripperTurnPosition = 0; // per chlor chlor night shelf ate
-
-
-
-
-    @Override
+//    public boolean normalMode = true ;
+//    public float sprintMode = gamepad1.left_trigger;
+//    public float crouchMode = gamepad1.right_trigger;
+//    @Override
     public void runOpMode() {
-
         // Initialize the hardware variables. Note that the strings used here must correspond
         // to the names assigned during the robot configuration step on the DS or RC devices.
         leftFrontDrive  = hardwareMap.get(DcMotor.class, "left_front_drive");
         leftBackDrive  = hardwareMap.get(DcMotor.class, "left_back_drive");
         rightFrontDrive = hardwareMap.get(DcMotor.class, "right_front_drive");
         rightBackDrive = hardwareMap.get(DcMotor.class, "right_back_drive");
-        liftExtender = hardwareMap.get(DcMotor.class, "lift_extender");
         liftRotator = hardwareMap.get(DcMotor.class, "lift_rotator");
-        gripping = hardwareMap.get(CRServo.class, "gripping");
-        gripperTurn = hardwareMap.get(Servo.class, "gripper_turn");
-        actuator = hardwareMap.get(DcMotor.class, "actuator");
-
 
 
         // ########################################################################################
@@ -124,39 +98,31 @@ public class IntoTheTeleOp extends LinearOpMode {
         leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
         rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
         rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
-
+        liftRotator.setDirection(DcMotor.Direction.FORWARD);
         // Wait for the game to start (driver presses START)
         telemetry.addData("Status", "Initialized");
         telemetry.update();
-
         waitForStart();
         runtime.reset();
-
         // run until the end of the match (driver presses STOP)
-
         while (opModeIsActive()) {
             double max;
-// Start of Driving Gamepad
             // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
             double vertical   = -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
             double lateral =  gamepad1.left_stick_x;
             double rotate     =  gamepad1.right_stick_x;
-
             // Combine the joystick requests for each axis-motion to determine each wheel's power.
             // Set up a variable for each drive wheel to save the power level for telemetry.
             double leftFrontPower  = vertical + lateral + rotate;
             double rightFrontPower = vertical - lateral - rotate;
             double leftBackPower   = vertical - lateral + rotate;
             double rightBackPower  = vertical + lateral - rotate;
-
-
             // Normalize the values so no wheel power exceeds 100%
             // This ensures that the robot maintains the desired motion.
             // finds wheel with the highest power value
             max = Math.max(Math.abs(leftFrontPower), Math.abs(rightFrontPower));
             max = Math.max(max, Math.abs(leftBackPower));
             max = Math.max(max, Math.abs(rightBackPower));
-
             // divides power value of all wheels by highest power value
             if (max > 1.0) {
                 leftFrontPower  /= max;
@@ -165,60 +131,30 @@ public class IntoTheTeleOp extends LinearOpMode {
                 rightBackPower  /= max;
             }
 
-            // stuff we added
-            if (normalMode) {
-                leftFrontPower = (vertical + lateral + rotate) / 2;
-                rightFrontPower = (vertical - lateral - rotate) / 2;
-                leftBackPower = (vertical - lateral + rotate) / 2;
-                rightBackPower = (vertical + lateral - rotate) / 2;
-            }
 
-            if (sprintMode>0) {
-                leftFrontPower = (vertical + lateral + rotate);
-                rightFrontPower = (vertical - lateral - rotate);
-                leftBackPower = (vertical - lateral + rotate);
-                rightBackPower = (vertical + lateral - rotate);
-            }
-
-            if (crouchMode>0) {
-                leftFrontPower = (vertical + lateral + rotate) / 4;
-                rightFrontPower = (vertical - lateral - rotate) / 4;
-                leftBackPower = (vertical - lateral + rotate) / 4;
-                rightBackPower = (vertical + lateral - rotate) / 4;
-            }
-            // End of Driving Gamepad
-            // Start of Extension Control
-            while (gamepad2.a) {
-                gripping.setPower(1);
-            }
-            while (gamepad2.b) {
-                gripping.setPower(-1);
-            }
-            while (gamepad2.left_trigger>=0 || gamepad2.right_trigger>=0) {
-                float armPower = -gamepad2.left_trigger + gamepad2.right_trigger;
+            while (gamepad1.left_trigger>=0 || gamepad1.right_trigger>=0) {
+                float armPower = -gamepad1.left_trigger + gamepad1.right_trigger;
                 liftRotator.setPower(armPower);
             }
-            while (gamepad2.left_stick_y != 0) {
-                liftExtender.setPower(gamepad2.left_stick_y);
-            }
-            while (gamepad2.left_bumper) {
-                actuator.setPower(-1);
-            }
-            while (gamepad2.right_bumper) {
-                actuator.setPower(1);
-            }
 
-
-
-
-//            if (gamepad2.x) {
-//                gripperTurn.setPosition(?);
+//            if (normalMode) {
+//                leftFrontPower = (vertical + lateral + rotate) / 2;
+//                rightFrontPower = (vertical - lateral - rotate) / 2;
+//                leftBackPower = (vertical - lateral + rotate) / 2;
+//                rightBackPower = (vertical + lateral - rotate) / 2;
 //            }
-//            if (gamepad2.y) {
-//                gripperTurn.setPosition(?);
+//            if (sprintMode>0) {
+//                leftFrontPower = (vertical + lateral + rotate);
+//                rightFrontPower = (vertical - lateral - rotate);
+//                leftBackPower = (vertical - lateral + rotate);
+//                rightBackPower = (vertical + lateral - rotate);
 //            }
-
-
+//            if (crouchMode>0) {
+//                leftFrontPower = (vertical + lateral + rotate) / 4;
+//                rightFrontPower = (vertical - lateral - rotate) / 4;
+//                leftBackPower = (vertical - lateral + rotate) / 4;
+//                rightBackPower = (vertical + lateral - rotate) / 4;
+//            }
             // This is test code:
             //
             // Uncomment the following code to test your motor directions.
@@ -228,14 +164,12 @@ public class IntoTheTeleOp extends LinearOpMode {
             //   2) Then make sure they run in the correct direction by modifying the
             //      the setDirection() calls above.
             // Once the correct motors move in the correct direction re-comment this code.
-
             /*
             leftFrontPower  = gamepad1.x ? 1.0 : 0.0;  // X gamepad
             leftBackPower   = gamepad1.a ? 1.0 : 0.0;  // A gamepad
             rightFrontPower = gamepad1.y ? 1.0 : 0.0;  // Y gamepad
             rightBackPower  = gamepad1.b ? 1.0 : 0.0;  // B gamepad
             */
-
             // Send calculated power to wheels
             leftFrontDrive.setPower(leftFrontPower);
             rightFrontDrive.setPower(rightFrontPower);
@@ -248,5 +182,4 @@ public class IntoTheTeleOp extends LinearOpMode {
             telemetry.addData("Back  left/Right", "%4.2f, %4.2f", leftBackPower, rightBackPower);
             telemetry.update();
         }
-    }
-}
+    }}
