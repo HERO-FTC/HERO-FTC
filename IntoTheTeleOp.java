@@ -77,7 +77,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
  * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list
  */
-@TeleOp(name="TEST 3: Omni Linear OpMode", group="Linear OpMode")
+@TeleOp(name="TEST: Omni Linear OpMode", group="Linear OpMode")
 //@Disabled
 public class IntoTheTeleOp extends LinearOpMode {
     // Declare OpMode members for each of the 4 motors.
@@ -89,13 +89,13 @@ public class IntoTheTeleOp extends LinearOpMode {
     private DcMotor liftRotator = null;
     private DcMotor liftExtender = null;
     private CRServo claw = null;
-    private Servo spin = null;
+    private CRServo spin = null;
     private Servo spheal = null;
 
 
     public boolean normalMode = true ;
-    public boolean sprintMode = false;
-    public boolean crouchMode = false;
+//    public boolean sprintMode = false;
+//    public boolean crouchMode = false;
 
     @Override
     public void runOpMode() {
@@ -108,11 +108,8 @@ public class IntoTheTeleOp extends LinearOpMode {
         liftRotator = hardwareMap.get(DcMotor.class, "lift_rotator");
         liftExtender = hardwareMap.get(DcMotor.class, "lift_extender");
         claw = hardwareMap.get(CRServo.class, "claw");
-        spin = hardwareMap.get(Servo.class, "spin");
+        spin = hardwareMap.get(CRServo.class, "spin");
         spheal = hardwareMap.get(Servo.class, "spheal");
-
-
-
 
 
         // ########################################################################################
@@ -132,7 +129,7 @@ public class IntoTheTeleOp extends LinearOpMode {
         liftRotator.setDirection(DcMotor.Direction.FORWARD);
         liftExtender.setDirection(DcMotor.Direction.REVERSE);
         claw.setDirection(CRServo.Direction.FORWARD);
-        spin.setDirection(Servo.Direction.FORWARD);
+        spin.setDirection(CRServo.Direction.FORWARD);
         spheal.setDirection(Servo.Direction.FORWARD);
 
 
@@ -146,28 +143,28 @@ public class IntoTheTeleOp extends LinearOpMode {
         while (opModeIsActive()) {
             double max;
             // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
-            double vertical   = -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
-            double lateral =  gamepad1.left_stick_x;
-            double rotate     =  gamepad1.right_stick_x;
+            double vertical = -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
+            double lateral = gamepad1.left_stick_x;
+            double rotate = gamepad1.right_stick_x;
 
             // Combine the joystick requests for each axis-motion to determine each wheel's power.
             // Set up a variable for each drive wheel to save the power level for telemetry.
-            double leftFrontPower  = (vertical + lateral + rotate)/2;
-            double rightFrontPower = (vertical - lateral - rotate)/2;
-            double leftBackPower   = (vertical - lateral + rotate)/2;
-            double rightBackPower  = (vertical + lateral - rotate)/2;
+            double leftFrontPower = (vertical + lateral + rotate) / 2;
+            double rightFrontPower = (vertical - lateral - rotate) / 2;
+            double leftBackPower = (vertical - lateral + rotate) / 2;
+            double rightBackPower = (vertical + lateral - rotate) / 2;
 
-            if (gamepad1.left_trigger>0) {
-                leftFrontPower  = (vertical + lateral + rotate)/4;
-               rightFrontPower = (vertical - lateral - rotate)/4;
-               leftBackPower   = (vertical - lateral + rotate)/4;
-                 rightBackPower  = (vertical + lateral - rotate)/4;
+            if (gamepad1.left_trigger > 0) {
+                leftFrontPower = (vertical + lateral + rotate) / 4;
+                rightFrontPower = (vertical - lateral - rotate) / 4;
+                leftBackPower = (vertical - lateral + rotate) / 4;
+                rightBackPower = (vertical + lateral - rotate) / 4;
             }
-            if (gamepad1.right_trigger>0) {
-                leftFrontPower  = (vertical + lateral + rotate)*2;
-                rightFrontPower = (vertical - lateral - rotate)*2;
-                leftBackPower   = (vertical - lateral + rotate)*2;
-                rightBackPower  = (vertical + lateral - rotate)*2;
+            if (gamepad1.right_trigger > 0) {
+                leftFrontPower = (vertical + lateral + rotate);
+                rightFrontPower = (vertical - lateral - rotate);
+                leftBackPower = (vertical - lateral + rotate);
+                rightBackPower = (vertical + lateral - rotate);
             }
             // Normalize the values so no wheel power exceeds 100%
             // This ensures that the robot maintains the desired motion.
@@ -177,20 +174,20 @@ public class IntoTheTeleOp extends LinearOpMode {
             max = Math.max(max, Math.abs(rightBackPower));
             // divides power value of all wheels by highest power value
             if (max > 1.0) {
-                leftFrontPower  /= max;
+                leftFrontPower /= max;
                 rightFrontPower /= max;
-                leftBackPower   /= max;
-                rightBackPower  /= max;
+                leftBackPower /= max;
+                rightBackPower /= max;
             }
 
-//         `   while (gamepad1.left_trigger>0) {
+//           while (gamepad1.left_trigger>0) {
 //                leftFrontPower  = vertical + lateral + rotate;
 //            }
-            if (gamepad2.left_trigger>0 || gamepad2.right_trigger>0) {
+            if (gamepad2.left_trigger > 0 || gamepad2.right_trigger > 0) {
                 float armPower = (-gamepad2.left_trigger + gamepad2.right_trigger);
-                    if (armPower>.8) {
-                        armPower = 0.8F;
-                    }
+                if (armPower > 0.8) {
+                    armPower = 0.8F;
+                }
                 liftRotator.setPower(armPower);
             } else {
                 liftRotator.setPower(0);
@@ -200,36 +197,42 @@ public class IntoTheTeleOp extends LinearOpMode {
                 claw.setPower(1);
             } else if (gamepad2.b) {
                 claw.setPower(0);
-            } else {
-                claw.setPower(0.5);
             }
+//            else {
+//                claw.setPower(0.5);
+//            }
 
             if (gamepad2.x) {
-                spin.setPosition(.4);
+                spin.setPower(0);
             } else if (gamepad2.y) {
-                spin.setPosition(.6);
+                spin.setPower(1);
             }
+//            } else {
+//                spin.setPower(0.5);
+//            }
 
             if (gamepad2.left_bumper) {
-                spheal.setPosition(.4);
+                spheal.setPosition(.5);
             } else if (gamepad2.right_bumper) {
-                spheal.setPosition(.6);
+                spheal.setPosition(1);
             }
 
-            if (gamepad2.left_stick_y>0) { // per chlor chlor night shelf -- try setting power to a constant instead of left_stick_y
+            if (gamepad2.left_stick_y > 0) {
+                liftExtender.setPower(-0.5);
+            } else if (gamepad2.left_stick_y < 0){
                 liftExtender.setPower(0.5);
             } else {
                 liftExtender.setPower(0);
             }
 
 
-                // maybe change below code into 'if elseif else if' doesnt work
-            if (normalMode) {
-                leftFrontPower = (vertical + lateral + rotate) / 2;
-                rightFrontPower = (vertical - lateral - rotate) / 2;
-                leftBackPower = (vertical - lateral + rotate) / 2;
-                rightBackPower = (vertical + lateral - rotate) / 2;
-            }
+//                // maybe change below code into 'if elseif else if' doesnt work
+//            if (normalMode) {
+//                leftFrontPower = (vertical + lateral + rotate) / 2;
+//                rightFrontPower = (vertical - lateral - rotate) / 2;
+//                leftBackPower = (vertical - lateral + rotate) / 2;
+//                rightBackPower = (vertical + lateral - rotate) / 2;
+//            }
 //            if (sprintMode>0) {
 //                leftFrontPower = (vertical + lateral + rotate);
 //                rightFrontPower = (vertical - lateral - rotate);
