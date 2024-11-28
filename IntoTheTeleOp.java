@@ -50,6 +50,8 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.util.Range;
+
 /*
  * This file contains an example of a Linear "OpMode".
  * An OpMode is a 'program' that runs in either the autonomous or the teleop period of an FTC match.
@@ -88,12 +90,12 @@ public class IntoTheTeleOp extends LinearOpMode {
     private DcMotor rightBackDrive = null;
     private DcMotor liftRotator = null;
     private DcMotor liftExtender = null;
-    private CRServo claw = null;
+    private Servo claw = null;
     private CRServo spin = null;
-    private Servo spheal = null;
+    private CRServo spheal = null;
 
 
-    public boolean normalMode = true ;
+//    public boolean normalMode = true ;
 //    public boolean sprintMode = false;
 //    public boolean crouchMode = false;
 
@@ -107,10 +109,12 @@ public class IntoTheTeleOp extends LinearOpMode {
         rightBackDrive = hardwareMap.get(DcMotor.class, "right_back_drive");
         liftRotator = hardwareMap.get(DcMotor.class, "lift_rotator");
         liftExtender = hardwareMap.get(DcMotor.class, "lift_extender");
-        claw = hardwareMap.get(CRServo.class, "claw");
+        claw = hardwareMap.get(Servo.class, "claw");
         spin = hardwareMap.get(CRServo.class, "spin");
-        spheal = hardwareMap.get(Servo.class, "spheal");
+        spheal = hardwareMap.get(CRServo.class, "spheal");
 
+        liftExtender.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        liftExtender.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         // ########################################################################################
         // !!!            IMPORTANT Drive Information. Test your motor directions.            !!!!!
@@ -128,10 +132,12 @@ public class IntoTheTeleOp extends LinearOpMode {
         rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
         liftRotator.setDirection(DcMotor.Direction.FORWARD);
         liftExtender.setDirection(DcMotor.Direction.REVERSE);
-        claw.setDirection(CRServo.Direction.FORWARD);
-        spin.setDirection(CRServo.Direction.FORWARD);
-        spheal.setDirection(Servo.Direction.FORWARD);
+//        claw.setDirection(Servo.Direction.FORWARD);
+//        spin.setDirection(CRServo.Direction.FORWARD);
+//        spheal.setDirection(Servo.Direction.FORWARD);
 
+//        liftRotator.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        liftExtender.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
 
         // Wait for the game to start (driver presses START)
@@ -146,26 +152,17 @@ public class IntoTheTeleOp extends LinearOpMode {
             double vertical = -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
             double lateral = gamepad1.left_stick_x;
             double rotate = gamepad1.right_stick_x;
+            ElapsedTime armTime = new ElapsedTime();
+
+//            claw.setPosition(1);
 
             // Combine the joystick requests for each axis-motion to determine each wheel's power.
             // Set up a variable for each drive wheel to save the power level for telemetry.
-            double leftFrontPower = (vertical + lateral + rotate) / 2;
-            double rightFrontPower = (vertical - lateral - rotate) / 2;
-            double leftBackPower = (vertical - lateral + rotate) / 2;
-            double rightBackPower = (vertical + lateral - rotate) / 2;
+            double leftFrontPower = (vertical + lateral + rotate);
+            double rightFrontPower = (vertical - lateral - rotate);
+            double leftBackPower = (vertical - lateral + rotate);
+            double rightBackPower = (vertical + lateral - rotate);
 
-            if (gamepad1.left_trigger > 0) {
-                leftFrontPower = (vertical + lateral + rotate) / 4;
-                rightFrontPower = (vertical - lateral - rotate) / 4;
-                leftBackPower = (vertical - lateral + rotate) / 4;
-                rightBackPower = (vertical + lateral - rotate) / 4;
-            }
-            if (gamepad1.right_trigger > 0) {
-                leftFrontPower = (vertical + lateral + rotate);
-                rightFrontPower = (vertical - lateral - rotate);
-                leftBackPower = (vertical - lateral + rotate);
-                rightBackPower = (vertical + lateral - rotate);
-            }
             // Normalize the values so no wheel power exceeds 100%
             // This ensures that the robot maintains the desired motion.
             // finds wheel with the highest power value
@@ -180,53 +177,80 @@ public class IntoTheTeleOp extends LinearOpMode {
                 rightBackPower /= max;
             }
 
+            if (gamepad1.left_trigger > 0) { // runs if left trigger is pressed (crawl mode)
+                leftFrontPower /= 4;
+                rightFrontPower /= 4;
+                leftBackPower /= 4;
+                rightBackPower /= 4;
+            } else if (gamepad1.right_trigger == 0) { // runs if neither trigger is pressed (normal mode)
+                leftFrontPower /= 2;
+                rightFrontPower /= 2;
+                leftBackPower /= 2;
+                rightBackPower /= 2;
+            } // else situation (right trigger pressed / sprint mode) ...
+            // ... does not require code, take default values which are fastest
+
+
 //           while (gamepad1.left_trigger>0) {
 //                leftFrontPower  = vertical + lateral + rotate;
 //            }
-            if (gamepad2.left_trigger > 0 || gamepad2.right_trigger > 0) {
-                float armPower = (-gamepad2.left_trigger + gamepad2.right_trigger);
-                if (armPower > 0.8) {
-                    armPower = 0.8F;
-                }
-                liftRotator.setPower(armPower);
-            } else {
-                liftRotator.setPower(0);
+//            if (gamepad2.left_trigger > 0 || gamepad2.right_trigger > 0) {
+//                float armPower = (-gamepad2.left_trigger + gamepad2.right_trigger);
+//                if (armPower > 0.8) {
+//                    armPower = 0.8F;
+//                }
+//                liftRotator.setPower(armPower);
+//            } else {
+//                liftRotator.setPower(0);
+//            }
+
+            // triggers on gamepad 2 -- setting power for lift rotator (DC motor)
+            if (gamepad2.left_trigger > 0) {
+                liftRotator.setPower(Range.clip(-gamepad2.left_trigger, -0.5, 0));
+            } else if (gamepad2.right_trigger > 0) {
+                liftRotator.setPower(Range.clip(gamepad2.right_trigger, 0, 1));
             }
 
-            if (gamepad2.a) {
-                claw.setPower(1);
-            } else if (gamepad2.b) {
-                claw.setPower(0);
+
+            // a/b on gamepad 2 -- setting power for claw (CR servo)
+            if (gamepad2.a) { // to open
+                claw.setPosition(1); // -0.125
+            } else if (gamepad2.b) { // to close
+                claw.setPosition(0.75); //0.35
             }
-//            else {
-//                claw.setPower(0.5);
+//            } else {
+//                claw.setPower(0.5); // see if this works
 //            }
 
             if (gamepad2.x) {
-                spin.setPower(0);
+                spin.setPower(-0.5);
             } else if (gamepad2.y) {
-                spin.setPower(1);
-            }
-//            } else {
-//                spin.setPower(0.5);
-//            }
-
-            if (gamepad2.left_bumper) {
-                spheal.setPosition(.5);
-            } else if (gamepad2.right_bumper) {
-                spheal.setPosition(1);
+                spin.setPower(0.5);
+            } else {
+                spin.setPower(0);
             }
 
-            if (gamepad2.left_stick_y > 0) {
-                liftExtender.setPower(-0.5);
-            } else if (gamepad2.left_stick_y < 0){
-                liftExtender.setPower(0.5);
+//             bumpers on gamepad 2 -- setting position of spheal (position servo)
+            if (gamepad2.left_bumper) { // untuck
+                spheal.setPower(0.5); // used to be 0.5
+            } else if (gamepad2.right_bumper) { // tuck
+                spheal.setPower(-0.5); //try 0.9
+            } else {
+                spheal.setPower(0);
+            }
+
+            // left joystick on gamepad 2 -- setting power of lift extender (DC motor)
+            if (gamepad2.left_stick_y > 0){
+                liftExtender.setPower(-1);
+            } else if (liftExtender.getCurrentPosition() > 2800) {
+                liftExtender.setPower(0.005);
+            } else if (gamepad2.left_stick_y < 0) {
+                liftExtender.setPower(1);
             } else {
                 liftExtender.setPower(0);
             }
 
-
-//                // maybe change below code into 'if elseif else if' doesnt work
+//                // maybe change below code into 'if elseif else if doesnt work
 //            if (normalMode) {
 //                leftFrontPower = (vertical + lateral + rotate) / 2;
 //                rightFrontPower = (vertical - lateral - rotate) / 2;
@@ -260,7 +284,9 @@ public class IntoTheTeleOp extends LinearOpMode {
             rightFrontPower = gamepad1.y ? 1.0 : 0.0;  // Y gamepad
             rightBackPower  = gamepad1.b ? 1.0 : 0.0;  // B gamepad
             */
-            // Send calculated power to wheels
+
+
+            // sending calculated power to wheels
             leftFrontDrive.setPower(leftFrontPower);
             rightFrontDrive.setPower(rightFrontPower);
             leftBackDrive.setPower(leftBackPower);
@@ -270,6 +296,9 @@ public class IntoTheTeleOp extends LinearOpMode {
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             telemetry.addData("Front left/Right", "%4.2f, %4.2f", leftFrontPower, rightFrontPower);
             telemetry.addData("Back  left/Right", "%4.2f, %4.2f", leftBackPower, rightBackPower);
+            telemetry.addData("liftExtender position", liftExtender.getCurrentPosition());
+            telemetry.addData("liftRotator position", liftRotator.getCurrentPosition());
             telemetry.update();
         }
     }}
+
